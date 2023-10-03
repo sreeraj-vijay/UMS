@@ -16,12 +16,15 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    profileImageName: {
+      type: String
+  }
   },
   {
     timestamps: true,
   }
 );
-userSchema.pre("save", async function (next) {       //??
+userSchema.pre("save", async function (next) {       
 
   if (!this.isModified("password")) {
     next();
@@ -31,8 +34,8 @@ userSchema.pre("save", async function (next) {       //??
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-userSchema.methods.matchPassword=async function(enteredPassword){
-  return await bcrypt.compare(enteredPassword,this.password)
+userSchema.methods.matchPassword = async function (enteredPassword){
+  return await bcrypt.compare(enteredPassword,this.password);
 }
 
 const User = mongoose.model("User", userSchema);

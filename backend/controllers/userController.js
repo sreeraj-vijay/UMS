@@ -6,26 +6,20 @@ import generateToken from "../utils/genereteToken.js";
 //route  POST/api/users/auth
 //@access public
 const authUser = asyncHandeler(async (req, res) => {
+  
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-  if (user) {
-    let passwordMatch = false;
-
-    passwordMatch = await user.matchPassword(password);
-
-    if (passwordMatch) {
-      generateToken(res, user._id);
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-      });
-    }else {
-      res.status(401);
-      throw new Error("invalid email or password");
-    }
-  } 
-  res.status(200).json({ message: "Auth user" });
+  if (user && (await user.matchPassword(password))) {
+    generateToken(res, user._id);
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid Email or Password");
+  }
 });
 
 //@decs Register a new user
@@ -63,21 +57,60 @@ const registerUser = asyncHandeler(async (req, res) => {
 //route  POST/api/users/logout
 //@access public
 const logoutUser = asyncHandeler(async (req, res) => {
-  res.status(200).json({ message: "Logout user" });
+
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
+  
 });
 
 //@decs get user profile
 //route  GET/api/users/proile
 //@access private
 const getUserprofile = asyncHandeler(async (req, res) => {
-  res.status(200).json({ message: "User profile" });
+  console.log(req.user);
+  const user = {
+    _id: req.user.id,
+    name: req.user.name,
+    email: req.user.email,
+  };
+  res.status(200).json(user);
 });
 
 //@decs update user profile
-//route  POST/api/users/proile
+//route  POST/api/users/profile
 //@access private
 const updateUserProfile = asyncHandeler(async (req, res) => {
-  res.status(200).json({ message: "update profile" });
+  const user = await User.findById(req.user._id);
+  // console.log(user);
+  if (user) {
+    console.log(req.body);
+
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+    if(req.file){
+      user.profileImageName = req.file.filename || user.profileImageName;
+  }
+
+    const updatedUser = await user.save();
+    res.status(200).json({
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      profileImageName:updatedUser.profileImageName
+
+    });
+  } else {
+    res.status(404);
+    throw new Error("user not found");
+  }
 });
 
 export {

@@ -1,7 +1,7 @@
 const notFound = (req,res,next) =>{
   const error = new Error(`Nor found -${req.originalUrl}`)
   res.status(404)
-  next(error)
+  next()
 }
 
 const errorHandler = (err,req,res,next) =>{
