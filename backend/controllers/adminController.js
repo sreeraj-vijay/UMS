@@ -9,8 +9,10 @@ import User from "../models/userModel.js";
 
 const authAdmin = asyncHandler(async (req, res) => {
   console.log("one");
+  console.log( req.body)
   const { email, password } = req.body;
   const admin = await Admin.findOne({ email });
+  console.log(admin);
   if (admin) {
 
     if (admin.password === password) {
@@ -129,5 +131,29 @@ const addNewUser = asyncHandler(async (req, res) => {
     }
   }
 });
+const registerAdmin=asyncHandler(async(req,res)=>{
+  const {email,password}=req.body;
+  const AdminExists=await Admin.findOne({email})
+if(AdminExists){
+  res.status(400);
+  throw new Error("User already exists")
+}    
+const admin =await Admin.create({
+  email,
+  password
 
-export { authAdmin, logoutAdmin, addNewUser,deleteUser,updateUserData,getAllUser };
+})
+if(admin){
+  generateAdminToken(res,admin._id)
+  res.status(201).json({
+      _id:admin._id,
+      email:admin.email
+  })
+}else{
+  res.status(400)
+  throw new Error("Invailed user data")
+}
+res.status(200).json({message:'Registration completed'})
+})
+
+export {registerAdmin, authAdmin, logoutAdmin, addNewUser,deleteUser,updateUserData,getAllUser };
